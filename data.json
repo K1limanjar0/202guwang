@@ -1,13 +1,52 @@
 {
   "members": [
-    {"id": "m1781157441304", "name": "甘殊荣", "initialCapital": 500000, "color": "#4F46E5"},
-    {"id": "m1781157459359", "name": "薛英龙", "initialCapital": 500000, "color": "#EF4444"},
-    {"id": "m1781157503688", "name": "云姗", "initialCapital": 535499, "color": "#10B981"},
-    {"id": "m1781157515265", "name": "佳锦", "initialCapital": 500000, "color": "#F59E0B"},
-    {"id": "m1781157539435", "name": "紫涵", "initialCapital": 500000, "color": "#8B5CF6"},
-    {"id": "m1781157546587", "name": "航成", "initialCapital": 500000, "color": "#EC4899"},
-    {"id": "m1781157588272", "name": "雨彤", "initialCapital": 500000, "color": "#06B6D4"}
+    {
+      "id": "m1781157441304",
+      "name": "殊荣",
+      "initialCapital": 500000,
+      "color": "#4F46E5"
+    },
+    {
+      "id": "m1781157459359",
+      "name": "薛英龙",
+      "initialCapital": 500000,
+      "color": "#EF4444"
+    },
+    {
+      "id": "m1781157503688",
+      "name": "云姗",
+      "initialCapital": 535499,
+      "color": "#10B981"
+    },
+    {
+      "id": "m1781157515265",
+      "name": "佳锦",
+      "initialCapital": 500000,
+      "color": "#F59E0B"
+    },
+    {
+      "id": "m1781157539435",
+      "name": "紫涵",
+      "initialCapital": 500000,
+      "color": "#8B5CF6"
+    },
+    {
+      "id": "m1781157546587",
+      "name": "航成",
+      "initialCapital": 500000,
+      "color": "#EC4899"
+    },
+    {
+      "id": "m1781157588272",
+      "name": "雨彤",
+      "initialCapital": 500000,
+      "color": "#06B6D4"
+    }
   ],
   "weeks": [],
-  "yuEBao": {"enabled": true, "annualRate": 1.1, "initialCapital": 500000}
+  "yuEBao": {
+    "enabled": true,
+    "annualRate": 1.1,
+    "initialCapital": 500000
+  }
 }
