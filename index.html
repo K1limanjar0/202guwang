@@ -370,15 +370,22 @@ async function loadData() {
       const parsed = await resp.json();
       const defaultYuEBao = { enabled: true, annualRate: 1.8, initialCapital: 100000 };
       data = { members: parsed.members || [], weeks: parsed.weeks || [], yuEBao: parsed.yuEBao || defaultYuEBao };
-      if (!githubToken) {
-        // 无 token 也能从 API 获取 sha（只读模式也需要，方便后续写入）
-        try {
-          const shaResp = await fetch(API_URL + '?_=' + Date.now());
-          if (shaResp.ok) { const info = await shaResp.json(); dataSha = info.sha; }
-        } catch(e) {}
-      }
     }
   } catch (e) { console.error('加载数据失败:', e); }
+}
+
+async function fetchLatestSha() {
+  // 有 token 时从 API 获取最新 SHA，无 token 时尝试匿名获取
+  const headers = githubToken ? { 'Authorization': 'Bearer ' + githubToken, 'Cache-Control': 'no-cache' } : {};
+  try {
+    const resp = await fetch(API_URL + '?_=' + Date.now(), { headers });
+    if (resp.ok) {
+      const info = await resp.json();
+      dataSha = info.sha;
+      return info.sha;
+    }
+  } catch(e) {}
+  return null;
 }
 
 async function saveData(silent) {
@@ -389,14 +396,13 @@ async function saveData(silent) {
   }
   saving = true;
   try {
-    // 获取最新 SHA
-    let sha = dataSha;
-    try {
-      const getResp = await fetch(API_URL + '?_=' + Date.now(), {
-        headers: { 'Authorization': 'Bearer ' + githubToken, 'Cache-Control': 'no-cache' }
-      });
-      if (getResp.ok) { const info = await getResp.json(); sha = info.sha; }
-    } catch(e) {}
+    // 先获取最新 SHA（必须成功才能继续）
+    const sha = await fetchLatestSha();
+    if (!sha) {
+      showToast('❌ 无法获取文件信息，请检查 Token 权限（需要 Contents: Read and write）');
+      saving = false;
+      return;
+    }
 
     // 上传数据
     const jsonStr = JSON.stringify(data, null, 2);
