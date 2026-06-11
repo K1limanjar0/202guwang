@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>202股王大赛</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { background: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  .card { background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); }
+  .btn { transition: all 0.2s; }
+  .btn:active { transform: scale(0.96); }
+  .sticky-left { position: sticky; left: 0; z-index: 5; background: inherit; }
+  .sticky-left-2 { position: sticky; left: 140px; z-index: 4; background: inherit; }
+  thead th { position: sticky; top: 0; z-index: 10; background: #f8fafc; }
+  thead th.sticky-left { z-index: 12; }
+  thead th.sticky-left-2 { z-index: 11; }
+  .table-cell-input { width: 100px; text-align: center; border: 1px solid transparent; border-radius: 6px; padding: 6px 4px; transition: all 0.15s; background: transparent; }
+  .table-cell-input:hover { border-color: #cbd5e1; background: #f8fafc; }
+  .table-cell-input:focus { border-color: #6366f1; background: white; outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,0.15); }
+  .return-positive { color: #16a34a; }
+  .return-negative { color: #dc2626; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+  .modal { background: white; border-radius: 16px; padding: 24px; width: 90%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+  .toast { position: fixed; top: 20px; right: 20px; z-index: 100; animation: slideIn 0.3s ease; }
+  @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+  .rank-badge { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; font-weight: 700; font-size: 14px; }
+  .rank-1 { background: #fef3c7; color: #d97706; }
+  .rank-2 { background: #f1f5f9; color: #64748b; }
+  .rank-3 { background: #fef2f2; color: #b45309; }
+  .chart-toggle { cursor: pointer; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+  .chart-toggle.active { background: #6366f1; color: white; }
+  .chart-toggle:not(.active) { background: #f1f5f9; color: #64748b; }
+  .chart-toggle:not(.active):hover { background: #e2e8f0; }
+  ::-webkit-scrollbar { height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Header -->
+<header class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+  <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold">📈 202股王大赛 <span class="text-xs bg-green-400 text-white px-2 py-0.5 rounded-full align-middle">共享版</span></h1>
+        <p class="text-indigo-100 mt-1 text-sm">每周记录一次 · 数据云端共享 · 看看谁跑赢余额宝</p>
+      </div>
+      <div id="statsCards" class="flex gap-4 text-sm"></div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+  <!-- Toolbar -->
+  <div class="card p-4 flex flex-wrap items-center gap-3" id="toolbar">
+    <button onclick="showMemberModal()" class="btn bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">
+      <i class="fa fa-user-plus mr-1"></i> 添加成员
+    </button>
+    <button onclick="addWeek()" class="btn bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700">
+      <i class="fa fa-calendar-plus-o mr-1"></i> 添加周记录
+    </button>
+    <div class="h-6 w-px bg-gray-200 hidden sm:block"></div>
+    <button onclick="showDemoData()" class="btn bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700" id="btnDemo">
+      <i class="fa fa-magic mr-1"></i> 示例数据
+    </button>
+    <button onclick="refreshData()" class="btn bg-white border border-green-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-50 text-green-600">
+      <i class="fa fa-refresh mr-1"></i> 刷新数据
+    </button>
+    <div class="h-6 w-px bg-gray-200 hidden sm:block"></div>
+    <button onclick="showTokenModal()" class="btn bg-white border border-gray-300 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-600" title="设置 GitHub Token 以同步数据">
+      <i class="fa fa-key mr-1"></i> <span id="tokenBadge" class="text-xs bg-red-400 text-white px-2 py-0.5 rounded-full">只读</span>
+    </button>
+    <div class="flex-1 hidden sm:block"></div>
+    <button onclick="exportData()" class="btn bg-white border border-gray-300 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 text-gray-600">
+      <i class="fa fa-download mr-1"></i> 导出
+    </button>
+    <button onclick="document.getElementById('importFile').click()" class="btn bg-white border border-gray-300 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 text-gray-600">
+      <i class="fa fa-upload mr-1"></i> 导入
+    </button>
+    <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)">
+    <button onclick="resetData()" class="btn bg-white border border-red-200 px-3 py-2 rounded-lg text-sm hover:bg-red-50 text-red-500">
+      <i class="fa fa-trash-o mr-1"></i> 重置
+    </button>
+  </div>
+
+  <!-- 余额宝基准设置 -->
+  <div id="yuebaoSettings" class="card p-4 hidden">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">💰</span>
+        <div>
+          <h3 class="font-semibold text-gray-700 text-sm">余额宝基准</h3>
+          <p class="text-xs text-gray-400">按复利计算，看看大家能不能跑赢余额宝</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4 flex-wrap">
+        <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+          <input type="checkbox" id="yuebaoEnabled" checked onchange="saveYuEBaoSettings()" class="w-4 h-4 rounded accent-indigo-600"> 启用
+        </label>
+        <div class="flex items-center gap-1 text-sm">
+          <span class="text-gray-500">年化</span>
+          <input type="number" id="yuebaoRate" value="1.8" step="0.1" min="0" max="10"
+            class="w-16 border border-gray-300 rounded px-2 py-1 text-sm text-center focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none"
+            onchange="saveYuEBaoSettings()">
+          <span class="text-gray-500">%</span>
+        </div>
+        <div class="flex items-center gap-1 text-sm">
+          <span class="text-gray-500">本金</span>
+          <input type="number" id="yuebaoCapital" value="100000" step="1000" min="0"
+            class="w-24 border border-gray-300 rounded px-2 py-1 text-sm text-center focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none"
+            onchange="saveYuEBaoSettings()">
+          <span class="text-gray-500">元</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div id="emptyState" class="card p-12 text-center hidden">
+    <div class="text-6xl mb-4">📊</div>
+    <h2 class="text-xl font-semibold text-gray-700 mb-2">还没有数据</h2>
+    <p class="text-gray-500 mb-6">先添加课题组成员，然后每周记录一次大家的资产总值</p>
+    <div class="flex gap-3 justify-center flex-wrap">
+      <button onclick="showMemberModal()" class="btn bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-700">
+        <i class="fa fa-user-plus mr-1"></i> 添加成员
+      </button>
+      <button onclick="showDemoData()" class="btn bg-white border border-gray-300 px-6 py-2.5 rounded-lg font-medium hover:bg-gray-50 text-gray-700">
+        <i class="fa fa-magic mr-1"></i> 加载示例数据
+      </button>
+    </div>
+  </div>
+
+  <!-- Data Table Section -->
+  <div id="tableSection" class="card overflow-hidden hidden">
+    <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+      <h2 class="font-semibold text-gray-700"><i class="fa fa-table mr-1 text-indigo-500"></i> 每周数据记录</h2>
+      <span class="text-xs text-gray-400"><i class="fa fa-info-circle mr-1"></i> 在表格中直接编辑数值，修改自动保存</span>
+    </div>
+    <div class="overflow-x-auto" id="tableContainer">
+      <table class="w-full text-sm" id="dataTable">
+        <!-- Rendered by JS -->
+      </table>
+    </div>
+  </div>
+
+  <!-- Chart Section -->
+  <div id="chartSection" class="card p-5 hidden">
+    <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
+      <h2 class="font-semibold text-gray-700"><i class="fa fa-line-chart mr-1 text-indigo-500"></i> 收益曲线</h2>
+      <div class="flex gap-1 bg-gray-100 rounded-full p-1">
+        <button class="chart-toggle active" onclick="switchChartMode('absolute')" id="toggleAbsolute">资产总值</button>
+        <button class="chart-toggle" onclick="switchChartMode('return')" id="toggleReturn">收益率 %</button>
+      </div>
+    </div>
+    <div class="relative" style="height: 380px;">
+      <canvas id="mainChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Ranking Section -->
+  <div id="rankingSection" class="card overflow-hidden hidden">
+    <div class="px-5 py-3 border-b border-gray-100">
+      <h2 class="font-semibold text-gray-700"><i class="fa fa-trophy mr-1 text-indigo-500"></i> 收益排名</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm" id="rankingTable">
+        <!-- Rendered by JS -->
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- Member Modal -->
+<div id="memberModal" class="modal-overlay hidden" onclick="if(event.target===this)closeMemberModal()">
+  <div class="modal">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4" id="memberModalTitle">添加成员</h3>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">姓名</label>
+        <input id="memberName" type="text" placeholder="输入成员姓名" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">初始资金（元）</label>
+        <input id="memberCapital" type="number" placeholder="100000" value="100000" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none">
+      </div>
+      <input type="hidden" id="memberEditId">
+      <div class="flex gap-3 justify-end pt-2">
+        <button onclick="closeMemberModal()" class="btn px-4 py-2 rounded-lg text-sm border border-gray-300 hover:bg-gray-50 text-gray-600">取消</button>
+        <button onclick="saveMember()" class="btn px-4 py-2 rounded-lg text-sm bg-indigo-600 text-white hover:bg-indigo-700">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast hidden"></div>
+
+<script>
+// ==================== 数据管理（GitHub API 同步）====================
+const REPO_OWNER = 'K1limanjar0';
+const REPO_NAME = '202guwang';
+const DATA_FILE = 'data.json';
+const RAW_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${DATA_FILE}`;
+const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_FILE}`;
+
+const COLORS = ['#4F46E5','#EF4444','#10B981','#F59E0B','#8B5CF6','#EC4899','#06B6D4','#F97316','#84CC16','#6366F1','#14B8A6','#E11D48'];
+
+let data = { members: [], weeks: [], yuEBao: { enabled: true, annualRate: 1.8, initialCapital: 100000 } };
+let chartMode = 'absolute';
+let chart = null;
+let saving = false;
+let dataSha = null;
+let githubToken = localStorage.getItem('gh_token_202guwang') || '';
+
+async function loadData() {
+  try {
+    const resp = await fetch(RAW_URL + '?_=' + Date.now());
+    if (resp.ok) {
+      const parsed = await resp.json();
+      const defaultYuEBao = { enabled: true, annualRate: 1.8, initialCapital: 100000 };
+      data = { members: parsed.members || [], weeks: parsed.weeks || [], yuEBao: parsed.yuEBao || defaultYuEBao };
+      if (!githubToken) {
+        // 无 token 也能从 API 获取 sha（只读模式也需要，方便后续写入）
+        try {
+          const shaResp = await fetch(API_URL + '?_=' + Date.now());
+          if (shaResp.ok) { const info = await shaResp.json(); dataSha = info.sha; }
+        } catch(e) {}
+      }
+    }
+  } catch (e) { console.error('加载数据失败:', e); }
+}
+
+async function saveData(silent) {
+  if (saving) return;
+  if (!githubToken) {
+    if (!silent) { showToast('🔑 请先设置 GitHub Token'); showTokenModal(); }
+    return;
+  }
+  saving = true;
+  try {
+    // 获取最新 SHA
+    let sha = dataSha;
+    try {
+      const getResp = await fetch(API_URL + '?_=' + Date.now(), {
+        headers: { 'Authorization': 'Bearer ' + githubToken, 'Cache-Control': 'no-cache' }
+      });
+      if (getResp.ok) { const info = await getResp.json(); sha = info.sha; }
+    } catch(e) {}
+
+    // 上传数据
+    const jsonStr = JSON.stringify(data, null, 2);
+    const content = btoa(unescape(encodeURIComponent(jsonStr)));
+    const resp = await fetch(API_URL, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + githubToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ message: '更新数据 ' + new Date().toLocaleString('zh-CN'), content, sha })
+    });
+
+    if (resp.ok) {
+      const result = await resp.json();
+      dataSha = result.content.sha;
+      renderAll();
+      if (!silent) showToast('✅ 数据已同步');
+    } else {
+      const err = await resp.json().catch(() => ({}));
+      showToast('❌ ' + (err.message || '保存失败，检查Token'));
+    }
+  } catch (e) {
+    showToast('❌ 网络错误，同步失败');
+  }
+  saving = false;
+}
+
+function autoSave() { saveData(true); }
+
+async function refreshData() {
+  await loadData();
+  renderAll();
+  showToast('🔄 数据已刷新');
+}
+
+function setGitHubToken(token) {
+  githubToken = token.trim();
+  if (githubToken) {
+    localStorage.setItem('gh_token_202guwang', githubToken);
+  } else {
+    localStorage.removeItem('gh_token_202guwang');
+  }
+  updateTokenBadge();
+}
+
+function updateTokenBadge() {
+  const badge = document.getElementById('tokenBadge');
+  if (badge) {
+    badge.className = githubToken ? 'text-xs bg-green-500 text-white px-2 py-0.5 rounded-full' : 'text-xs bg-red-400 text-white px-2 py-0.5 rounded-full cursor-pointer';
+    badge.textContent = githubToken ? '可写入' : '只读';
+    badge.title = githubToken ? 'Token 已设置，数据会同步到 GitHub' : '点击设置 Token 以写入数据';
+    badge.onclick = githubToken ? null : showTokenModal;
+  }
+}
+
+function showTokenModal() {
+  const token = prompt('请输入 GitHub Personal Access Token（Fine-grained token）：\n\n1. 打开 https://github.com/settings/tokens\n2. 创建 Fine-grained token\n3. 选择仓库 K1limanjar0/202guwang\n4. 权限勾选 Contents (Read and write)\n5. 复制 token 粘贴到这里\n\n留空可清除已保存的 token（变为只读模式）', githubToken);
+  if (token !== null) {
+    setGitHubToken(token);
+    if (token) showToast('✅ Token 已保存，可同步数据'); else showToast('📖 已切换为只读模式');
+    location.reload();
+  }
+}
+
+// ==================== 成员操作 ====================
+function addMember(name, initialCapital) {
+  const id = 'm' + Date.now();
+  const colorIdx = data.members.length % COLORS.length;
+  data.members.push({ id, name, initialCapital: parseFloat(initialCapital) || 100000, color: COLORS[colorIdx] });
+  saveData();
+}
+
+function updateMember(id, name, initialCapital) {
+  const m = data.members.find(x => x.id === id);
+  if (m) { m.name = name; m.initialCapital = parseFloat(initialCapital) || 100000; }
+  saveData();
+}
+
+function deleteMember(id) {
+  if (!confirm('确定要删除该成员及其所有数据吗？此操作不可撤销。')) return;
+  data.members = data.members.filter(m => m.id !== id);
+  data.weeks.forEach(w => { delete w.values[id]; });
+  saveData();
+}
+
+// ==================== 周操作 ====================
+function addWeek() {
+  if (data.members.length === 0) { showToast('⚠️ 请先添加成员'); return; }
+  const n = data.weeks.length + 1;
+  const id = 'w' + Date.now();
+  const today = new Date().toISOString().split('T')[0];
+  const values = {};
+  data.members.forEach(m => { values[m.id] = null; });
+  data.weeks.push({ id, label: `第${n}周`, date: today, values });
+  saveData();
+}
+
+function deleteWeek(id) {
+  if (!confirm('确定要删除该周的所有记录吗？此操作不可撤销。')) return;
+  data.weeks = data.weeks.filter(w => w.id !== id);
+  // Re-label remaining weeks
+  data.weeks.forEach((w, i) => { w.label = `第${i + 1}周`; });
+  saveData();
+}
+
+function updateWeekValue(weekId, memberId, value) {
+  const week = data.weeks.find(w => w.id === weekId);
+  if (!week) return;
+  week.values[memberId] = value === '' || value === null ? null : parseFloat(value);
+  autoSave();
+}
+
+function updateWeekLabel(weekId, newLabel) {
+  const week = data.weeks.find(w => w.id === weekId);
+  if (week) { week.label = newLabel; autoSave(); }
+}
+
+function updateWeekDate(weekId, newDate) {
+  const week = data.weeks.find(w => w.id === weekId);
+  if (week) { week.date = newDate; autoSave(); }
+}
+
+// ==================== 计算 ====================
+function getReturnRate(member, weekValue) {
+  if (weekValue === null || weekValue === undefined || member.initialCapital === 0) return null;
+  return ((weekValue - member.initialCapital) / member.initialCapital * 100);
+}
+
+function getLatestReturnRate(member) {
+  let lastVal = null;
+  for (let i = data.weeks.length - 1; i >= 0; i--) {
+    const v = data.weeks[i].values[member.id];
+    if (v !== null && v !== undefined) { lastVal = v; break; }
+  }
+  return lastVal !== null ? getReturnRate(member, lastVal) : null;
+}
+
+function getLatestValue(member) {
+  for (let i = data.weeks.length - 1; i >= 0; i--) {
+    const v = data.weeks[i].values[member.id];
+    if (v !== null && v !== undefined) return v;
+  }
+  return null;
+}
+
+function getRanking() {
+  return data.members
+    .map(m => ({ ...m, returnRate: getLatestReturnRate(m), latestValue: getLatestValue(m) }))
+    .sort((a, b) => {
+      if (a.returnRate === null && b.returnRate === null) return 0;
+      if (a.returnRate === null) return 1;
+      if (b.returnRate === null) return -1;
+      return b.returnRate - a.returnRate;
+    });
+}
+
+// ==================== 余额宝基准计算 ====================
+function getYuEBaoValue(weekIndex) {
+  if (!data.yuEBao || !data.yuEBao.enabled) return null;
+  const { annualRate, initialCapital } = data.yuEBao;
+  const weeklyRate = Math.pow(1 + annualRate / 100, 1 / 52) - 1;
+  return Math.round(initialCapital * Math.pow(1 + weeklyRate, weekIndex + 1));
+}
+
+function getYuEBaoReturnRate(weekIndex) {
+  if (!data.yuEBao || !data.yuEBao.enabled) return null;
+  const value = getYuEBaoValue(weekIndex);
+  if (value === null) return null;
+  return ((value - data.yuEBao.initialCapital) / data.yuEBao.initialCapital * 100);
+}
+
+function getYuEBaoLatestReturnRate() {
+  if (data.weeks.length === 0) return null;
+  return getYuEBaoReturnRate(data.weeks.length - 1);
+}
+
+function getYuEBaoLatestValue() {
+  if (data.weeks.length === 0) return null;
+  return getYuEBaoValue(data.weeks.length - 1);
+}
+
+function saveYuEBaoSettings() {
+  const enabled = document.getElementById('yuebaoEnabled').checked;
+  const annualRate = parseFloat(document.getElementById('yuebaoRate').value) || 1.8;
+  const initialCapital = parseFloat(document.getElementById('yuebaoCapital').value) || 100000;
+  data.yuEBao = { enabled, annualRate, initialCapital };
+  autoSave();
+}
+
+// ==================== 渲染 ====================
+function renderAll() {
+  renderEmptyState();
+  renderYuEBaoSettings();
+  renderTable();
+  renderChart();
+  renderRanking();
+  renderStats();
+  updateDemoButton();
+}
+
+function renderEmptyState() {
+  const empty = document.getElementById('emptyState');
+  const table = document.getElementById('tableSection');
+  const chartS = document.getElementById('chartSection');
+  const rankS = document.getElementById('rankingSection');
+  const ybSettings = document.getElementById('yuebaoSettings');
+
+  if (data.members.length === 0 && data.weeks.length === 0) {
+    empty.classList.remove('hidden');
+    table.classList.add('hidden');
+    chartS.classList.add('hidden');
+    rankS.classList.add('hidden');
+    ybSettings.classList.add('hidden');
+  } else {
+    empty.classList.add('hidden');
+    table.classList.remove('hidden');
+    chartS.classList.remove('hidden');
+    rankS.classList.remove('hidden');
+    ybSettings.classList.remove('hidden');
+  }
+}
+
+function renderYuEBaoSettings() {
+  if (data.yuEBao) {
+    document.getElementById('yuebaoEnabled').checked = data.yuEBao.enabled;
+    document.getElementById('yuebaoRate').value = data.yuEBao.annualRate;
+    document.getElementById('yuebaoCapital').value = data.yuEBao.initialCapital;
+  }
+}
+
+function renderStats() {
+  const container = document.getElementById('statsCards');
+  const totalMembers = data.members.length;
+  const totalWeeks = data.weeks.length;
+  const ranking = getRanking();
+  const topMember = ranking.length > 0 && ranking[0].returnRate !== null ? ranking[0] : null;
+  let avgReturn = null;
+  const returns = ranking.map(r => r.returnRate).filter(r => r !== null);
+  if (returns.length > 0) avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
+
+  // 跑赢余额宝的人数
+  let beatYuEBao = null;
+  if (data.yuEBao && data.yuEBao.enabled && data.weeks.length > 0) {
+    const ybRR = getYuEBaoLatestReturnRate();
+    if (ybRR !== null) {
+      beatYuEBao = ranking.filter(r => r.returnRate !== null && r.returnRate > ybRR).length;
+    }
+  }
+
+  container.innerHTML = `
+    <div class="bg-white/15 backdrop-blur rounded-lg px-4 py-2 text-center min-w-[70px]">
+      <div class="text-2xl font-bold">${totalMembers}</div>
+      <div class="text-xs text-indigo-100">参赛成员</div>
+    </div>
+    <div class="bg-white/15 backdrop-blur rounded-lg px-4 py-2 text-center min-w-[70px]">
+      <div class="text-2xl font-bold">${totalWeeks}</div>
+      <div class="text-xs text-indigo-100">记录周数</div>
+    </div>
+    ${topMember ? `
+    <div class="bg-white/15 backdrop-blur rounded-lg px-4 py-2 text-center min-w-[80px]">
+      <div class="text-lg font-bold truncate max-w-[100px]">🥇 ${topMember.name}</div>
+      <div class="text-xs ${topMember.returnRate >= 0 ? 'text-green-200' : 'text-red-200'}">${topMember.returnRate >= 0 ? '+' : ''}${topMember.returnRate.toFixed(2)}%</div>
+    </div>` : ''}
+    ${avgReturn !== null ? `
+    <div class="bg-white/15 backdrop-blur rounded-lg px-4 py-2 text-center min-w-[70px]">
+      <div class="text-lg font-bold ${avgReturn >= 0 ? 'text-green-200' : 'text-red-200'}">${avgReturn >= 0 ? '+' : ''}${avgReturn.toFixed(2)}%</div>
+      <div class="text-xs text-indigo-100">平均收益</div>
+    </div>` : ''}
+    ${beatYuEBao !== null ? `
+    <div class="bg-white/15 backdrop-blur rounded-lg px-4 py-2 text-center min-w-[80px]">
+      <div class="text-lg font-bold">${beatYuEBao}/${totalMembers}</div>
+      <div class="text-xs text-amber-200">跑赢余额宝 💰</div>
+    </div>` : ''}
+  `;
+}
+
+function renderTable() {
+  const table = document.getElementById('dataTable');
+  if (data.members.length === 0) {
+    table.innerHTML = '<tr><td colspan="100" class="text-center py-12 text-gray-400">暂无数据，请先添加成员</td></tr>';
+    return;
+  }
+
+  let html = '<thead><tr>';
+  html += '<th class="sticky-left px-4 py-3 text-left font-semibold text-gray-600 border-b border-gray-200 whitespace-nowrap">成员</th>';
+  html += '<th class="sticky-left-2 px-4 py-3 text-right font-semibold text-gray-600 border-b border-gray-200 whitespace-nowrap">初始资金</th>';
+  data.weeks.forEach(w => {
+    html += `<th class="px-3 py-2 text-center border-b border-gray-200 whitespace-nowrap" style="min-width:120px">
+      <div class="flex flex-col items-center gap-1">
+        <input value="${escapeHtml(w.label)}" class="text-xs font-semibold text-gray-600 bg-transparent border border-transparent hover:border-gray-300 focus:border-indigo-400 rounded px-2 py-0.5 text-center outline-none" style="width:80px" onchange="updateWeekLabel('${w.id}', this.value)" title="点击编辑周标签">
+        <input type="date" value="${w.date}" class="text-xs text-gray-400 bg-transparent border border-transparent hover:border-gray-300 focus:border-indigo-400 rounded px-1 py-0.5 outline-none" onchange="updateWeekDate('${w.id}', this.value)" title="点击编辑日期">
+        <button onclick="deleteWeek('${w.id}')" class="text-gray-300 hover:text-red-400 text-xs mt-0.5" title="删除此周"><i class="fa fa-times"></i></button>
+      </div>
+    </th>`;
+  });
+  html += '<th class="px-4 py-3 text-center font-semibold text-gray-600 border-b border-gray-200 whitespace-nowrap">最新收益率</th>';
+  html += '<th class="px-4 py-3 text-center font-semibold text-gray-600 border-b border-gray-200 whitespace-nowrap">操作</th>';
+  html += '</tr></thead><tbody>';
+
+  data.members.forEach((member, mi) => {
+    const latestRR = getLatestReturnRate(member);
+    const bgClass = mi % 2 === 0 ? 'bg-white' : 'bg-gray-50/60';
+    html += `<tr class="hover:bg-indigo-50/30 transition-colors ${bgClass}">`;
+    html += `<td class="sticky-left px-4 py-3 border-b border-gray-100 ${bgClass}">
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${member.color}"></span>
+        <span class="font-medium text-gray-800">${escapeHtml(member.name)}</span>
+      </div>
+    </td>`;
+    html += `<td class="sticky-left-2 px-4 py-3 border-b border-gray-100 text-right font-mono text-gray-700 ${bgClass}">${member.initialCapital.toLocaleString()}</td>`;
+
+    data.weeks.forEach(w => {
+      const val = w.values[member.id];
+      const rr = getReturnRate(member, val);
+      html += `<td class="px-2 py-2 border-b border-gray-100 text-center">
+        <input type="number" value="${val !== null && val !== undefined ? val : ''}"
+          class="table-cell-input font-mono text-sm" placeholder="-"
+          onchange="updateWeekValue('${w.id}', '${member.id}', this.value)"
+          onfocus="this.select()">
+        ${rr !== null ? `<div class="text-xs mt-0.5 ${rr >= 0 ? 'return-positive' : 'return-negative'}">${rr >= 0 ? '+' : ''}${rr.toFixed(2)}%</div>` : '<div class="text-xs text-gray-300">-</div>'}
+      </td>`;
+    });
+
+    html += `<td class="px-4 py-3 border-b border-gray-100 text-center">
+      <span class="font-mono font-semibold ${latestRR !== null ? (latestRR >= 0 ? 'return-positive' : 'return-negative') : 'text-gray-400'}">
+        ${latestRR !== null ? (latestRR >= 0 ? '+' : '') + latestRR.toFixed(2) + '%' : '-'}
+      </span>
+    </td>`;
+    html += `<td class="px-3 py-3 border-b border-gray-100 text-center">
+      <button onclick="editMember('${member.id}')" class="text-gray-400 hover:text-indigo-500 mr-2" title="编辑"><i class="fa fa-pencil"></i></button>
+      <button onclick="deleteMember('${member.id}')" class="text-gray-400 hover:text-red-500" title="删除"><i class="fa fa-trash"></i></button>
+    </td>`;
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+function renderChart() {
+  const canvas = document.getElementById('mainChart');
+  const ctx = canvas.getContext('2d');
+
+  if (chart) { chart.destroy(); chart = null; }
+
+  if (data.members.length === 0 || data.weeks.length === 0) {
+    // Draw empty state on canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '16px -apple-system, "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('暂无数据，请添加成员和周记录', canvas.width / 2, canvas.height / 2);
+    return;
+  }
+
+  const labels = data.weeks.map(w => w.label);
+  const datasets = data.members.map(member => ({
+    label: member.name,
+    data: data.weeks.map(w => {
+      const v = w.values[member.id];
+      if (v === null || v === undefined) return null;
+      if (chartMode === 'absolute') return v;
+      return parseFloat(getReturnRate(member, v).toFixed(2));
+    }),
+    borderColor: member.color,
+    backgroundColor: member.color + '20',
+    borderWidth: 2.5,
+    pointRadius: 4,
+    pointHoverRadius: 7,
+    pointBackgroundColor: member.color,
+    pointBorderColor: 'white',
+    pointBorderWidth: 2,
+    tension: 0.35,
+    spanGaps: false,
+  }));
+
+  // 余额宝基准线
+  if (data.yuEBao && data.yuEBao.enabled && data.weeks.length > 0) {
+    const ybColor = '#F59E0B';
+    datasets.push({
+      label: '💰 余额宝基准',
+      data: data.weeks.map((_, i) => {
+        if (chartMode === 'absolute') return getYuEBaoValue(i);
+        return parseFloat(getYuEBaoReturnRate(i).toFixed(2));
+      }),
+      borderColor: ybColor,
+      backgroundColor: ybColor + '15',
+      borderWidth: 3,
+      borderDash: [8, 4],
+      pointRadius: 3,
+      pointHoverRadius: 6,
+      pointBackgroundColor: ybColor,
+      pointBorderColor: 'white',
+      pointBorderWidth: 2,
+      pointStyle: 'rectRounded',
+      tension: 0.35,
+      spanGaps: false,
+      order: 1,
+    });
+  }
+
+  // 余额宝基准线颜色零线 (收益率模式)
+  const ybZeroLine = {
+    id: 'ybZeroLine',
+    afterDraw(chart) {
+      if (chartMode === 'return') {
+        const yScale = chart.scales.y;
+        const xScale = chart.scales.x;
+        const yPos = yScale.getPixelForValue(0);
+        if (yPos >= yScale.top && yPos <= yScale.bottom) {
+          const ctx = chart.ctx;
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([6, 4]);
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 1;
+          ctx.moveTo(xScale.left, yPos);
+          ctx.lineTo(xScale.right, yPos);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    }
+  };
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    plugins: [ybZeroLine],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { usePointStyle: true, padding: 20, pointStyleWidth: 8, font: { size: 12 } }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.parsed.y === null || ctx.parsed.y === undefined) return ctx.dataset.label + ': 无数据';
+              if (chartMode === 'absolute') return ctx.dataset.label + ': ¥' + ctx.parsed.y.toLocaleString();
+              return ctx.dataset.label + ': ' + (ctx.parsed.y >= 0 ? '+' : '') + ctx.parsed.y.toFixed(2) + '%';
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: {
+          grid: { color: '#f1f5f9' },
+          ticks: {
+            font: { size: 11 },
+            callback: function(v) {
+              if (chartMode === 'absolute') {
+                if (v >= 10000) return (v / 10000).toFixed(1) + '万';
+                return v.toLocaleString();
+              }
+              return v.toFixed(1) + '%';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderRanking() {
+  const table = document.getElementById('rankingTable');
+  const ranking = getRanking();
+
+  if (ranking.length === 0) {
+    table.innerHTML = '<tr><td class="text-center py-8 text-gray-400">暂无排名数据</td></tr>';
+    return;
+  }
+
+  let html = '<thead><tr class="bg-gray-50 text-xs">';
+  html += '<th class="px-4 py-3 text-center font-semibold text-gray-500 w-16">排名</th>';
+  html += '<th class="px-4 py-3 text-left font-semibold text-gray-500">成员</th>';
+  html += '<th class="px-4 py-3 text-right font-semibold text-gray-500">初始资金</th>';
+  html += '<th class="px-4 py-3 text-right font-semibold text-gray-500">最新资产</th>';
+  html += '<th class="px-4 py-3 text-right font-semibold text-gray-500">收益金额</th>';
+  html += '<th class="px-4 py-3 text-right font-semibold text-gray-500">收益率</th>';
+  html += '</tr></thead><tbody>';
+
+  ranking.forEach((m, i) => {
+    const rank = i + 1;
+    let rankHtml = `<span class="rank-badge rank-${Math.min(rank, 3)}">${rank}</span>`;
+    if (rank === 1) rankHtml = '🥇';
+    else if (rank === 2) rankHtml = '🥈';
+    else if (rank === 3) rankHtml = '🥉';
+
+    const profit = m.latestValue !== null ? m.latestValue - m.initialCapital : null;
+
+    html += `<tr class="border-b border-gray-50 hover:bg-indigo-50/30 transition-colors">`;
+    html += `<td class="px-4 py-4 text-center text-lg">${rankHtml}</td>`;
+    html += `<td class="px-4 py-4">
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full" style="background:${m.color}"></span>
+        <span class="font-medium text-gray-800">${escapeHtml(m.name)}</span>
+      </div>
+    </td>`;
+    html += `<td class="px-4 py-4 text-right font-mono text-gray-600">¥${m.initialCapital.toLocaleString()}</td>`;
+    html += `<td class="px-4 py-4 text-right font-mono font-medium text-gray-800">${m.latestValue !== null ? '¥' + m.latestValue.toLocaleString() : '-'}</td>`;
+    html += `<td class="px-4 py-4 text-right font-mono font-medium ${profit !== null ? (profit >= 0 ? 'return-positive' : 'return-negative') : 'text-gray-400'}">${profit !== null ? (profit >= 0 ? '+' : '') + profit.toLocaleString() : '-'}</td>`;
+    html += `<td class="px-4 py-4 text-right font-mono font-bold text-base ${m.returnRate !== null ? (m.returnRate >= 0 ? 'return-positive' : 'return-negative') : 'text-gray-400'}">${m.returnRate !== null ? (m.returnRate >= 0 ? '+' : '') + m.returnRate.toFixed(2) + '%' : '-'}</td>`;
+    html += '</tr>';
+  });
+
+  // 余额宝基准行
+  if (data.yuEBao && data.yuEBao.enabled && data.weeks.length > 0) {
+    const ybLatest = getYuEBaoLatestValue();
+    const ybRR = getYuEBaoLatestReturnRate();
+    const ybProfit = ybLatest !== null ? ybLatest - data.yuEBao.initialCapital : null;
+    html += `<tr class="border-t-2 border-amber-200 bg-amber-50/50">
+      <td class="px-4 py-4 text-center"><span class="text-lg">💰</span></td>
+      <td class="px-4 py-4">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-sm" style="background:#F59E0B"></span>
+          <span class="font-medium text-gray-700">余额宝基准</span>
+          <span class="text-xs text-gray-400">(年化${data.yuEBao.annualRate}%)</span>
+        </div>
+      </td>
+      <td class="px-4 py-4 text-right font-mono text-gray-600">¥${data.yuEBao.initialCapital.toLocaleString()}</td>
+      <td class="px-4 py-4 text-right font-mono font-medium text-gray-800">${ybLatest !== null ? '¥' + ybLatest.toLocaleString() : '-'}</td>
+      <td class="px-4 py-4 text-right font-mono font-medium ${ybProfit !== null ? (ybProfit >= 0 ? 'return-positive' : 'return-negative') : 'text-gray-400'}">${ybProfit !== null ? (ybProfit >= 0 ? '+' : '') + ybProfit.toLocaleString() : '-'}</td>
+      <td class="px-4 py-4 text-right font-mono font-bold text-base ${ybRR !== null ? (ybRR >= 0 ? 'return-positive' : 'return-negative') : 'text-gray-400'}">${ybRR !== null ? (ybRR >= 0 ? '+' : '') + ybRR.toFixed(2) + '%' : '-'}</td>
+    </tr>`;
+  }
+
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+function updateDemoButton() {
+  const btn = document.getElementById('btnDemo');
+  if (data.members.length === 0 && data.weeks.length === 0) {
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+  }
+}
+
+function switchChartMode(mode) {
+  chartMode = mode;
+  document.getElementById('toggleAbsolute').classList.toggle('active', mode === 'absolute');
+  document.getElementById('toggleReturn').classList.toggle('active', mode === 'return');
+  renderChart();
+}
+
+// ==================== 模态框 ====================
+function showMemberModal(editId) {
+  const modal = document.getElementById('memberModal');
+  const title = document.getElementById('memberModalTitle');
+  document.getElementById('memberEditId').value = editId || '';
+  if (editId) {
+    title.textContent = '编辑成员';
+    const m = data.members.find(x => x.id === editId);
+    if (m) {
+      document.getElementById('memberName').value = m.name;
+      document.getElementById('memberCapital').value = m.initialCapital;
+    }
+  } else {
+    title.textContent = '添加成员';
+    document.getElementById('memberName').value = '';
+    document.getElementById('memberCapital').value = '100000';
+  }
+  modal.classList.remove('hidden');
+  setTimeout(() => document.getElementById('memberName').focus(), 100);
+}
+
+function closeMemberModal() {
+  document.getElementById('memberModal').classList.add('hidden');
+  document.getElementById('memberEditId').value = '';
+}
+
+function saveMember() {
+  const name = document.getElementById('memberName').value.trim();
+  const capital = document.getElementById('memberCapital').value;
+  const editId = document.getElementById('memberEditId').value;
+  if (!name) { showToast('⚠️ 请输入成员姓名'); return; }
+  if (!capital || parseFloat(capital) <= 0) { showToast('⚠️ 请输入有效的初始资金'); return; }
+  if (editId) {
+    updateMember(editId, name, parseFloat(capital));
+  } else {
+    addMember(name, parseFloat(capital));
+  }
+  closeMemberModal();
+}
+
+function editMember(id) {
+  showMemberModal(id);
+}
+
+// ==================== Toast ====================
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.innerHTML = `<div class="bg-gray-800 text-white px-4 py-2.5 rounded-lg shadow-lg text-sm flex items-center gap-2">${msg}</div>`;
+  toast.classList.remove('hidden');
+  toast.style.animation = 'none';
+  toast.offsetHeight; // reflow
+  toast.style.animation = 'slideIn 0.3s ease';
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => {
+    toast.style.animation = 'fadeOut 0.3s ease forwards';
+    setTimeout(() => toast.classList.add('hidden'), 300);
+  }, 2000);
+}
+
+// ==================== 数据导出导入 ====================
+function exportData() {
+  if (data.members.length === 0 && data.weeks.length === 0) { showToast('⚠️ 没有数据可导出'); return; }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `炒股大赛数据_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ 数据已导出');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!confirm('导入将覆盖当前所有数据，确定继续吗？')) { event.target.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported.members || !imported.weeks) throw new Error('数据格式错误');
+      const defaultYuEBao = { enabled: true, annualRate: 1.8, initialCapital: 100000 };
+      data = { members: imported.members, weeks: imported.weeks, yuEBao: imported.yuEBao || defaultYuEBao };
+      saveData();
+      showToast('✅ 数据导入成功');
+    } catch (err) {
+      showToast('❌ 导入失败，请检查文件格式');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function resetData() {
+  if (!confirm('确定要清空所有数据吗？此操作不可撤销！\n\n建议先导出备份。')) return;
+  data = { members: [], weeks: [], yuEBao: { enabled: true, annualRate: 1.8, initialCapital: 100000 } };
+  saveData();
+  showToast('✅ 数据已重置');
+}
+
+function showDemoData() {
+  if (data.members.length > 0 || data.weeks.length > 0) {
+    if (!confirm('加载示例数据将覆盖当前数据，确定继续吗？')) return;
+  }
+
+  const names = ['张三', '李四', '王五', '赵六', '陈七'];
+  const initials = [100000, 100000, 150000, 80000, 120000];
+  const members = names.map((name, i) => ({
+    id: 'demo_m' + i,
+    name,
+    initialCapital: initials[i],
+    color: COLORS[i]
+  }));
+
+  // Generate 8 weeks of demo data with some variation
+  const weeks = [];
+  const baseDate = new Date('2026-04-15');
+  // Base performance curves (different trajectories for each member)
+  const trajectories = [
+    [0.02, 0.05, 0.03, 0.08, 0.07, 0.12, 0.10, 0.15],   // 张三: steady growth
+    [0.01, -0.02, 0.00, 0.03, -0.01, 0.05, 0.08, 0.06],  // 李四: volatile
+    [0.05, 0.08, 0.06, 0.04, 0.10, 0.09, 0.07, 0.11],    // 王五: good growth
+    [-0.01, -0.03, 0.01, -0.02, 0.02, 0.00, 0.04, 0.03], // 赵六: struggling
+    [0.03, 0.06, 0.09, 0.07, 0.11, 0.14, 0.13, 0.18],    // 陈七: best performer
+  ];
+
+  for (let w = 0; w < 8; w++) {
+    const d = new Date(baseDate);
+    d.setDate(d.getDate() + w * 7);
+    const values = {};
+    members.forEach((m, mi) => {
+      const rr = trajectories[mi][w];
+      values[m.id] = Math.round(m.initialCapital * (1 + rr));
+    });
+    weeks.push({
+      id: 'demo_w' + w,
+      label: `第${w + 1}周`,
+      date: d.toISOString().split('T')[0],
+      values
+    });
+  }
+
+  data = { members, weeks, yuEBao: { enabled: true, annualRate: 1.8, initialCapital: 100000 } };
+  saveData();
+  showToast('✅ 示例数据已加载');
+}
+
+// ==================== 工具函数 ====================
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ==================== 初始化 ====================
+(async function init() {
+  updateTokenBadge();
+  await loadData();
+  renderAll();
+  // 每15秒自动刷新一次
+  setInterval(async () => {
+    await loadData();
+    renderAll();
+  }, 15000);
+})();
+</script>
+</body>
+</html>
