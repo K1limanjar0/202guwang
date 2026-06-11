@@ -362,6 +362,7 @@ let chart = null;
 let saving = false;
 let dataSha = null;
 let githubToken = localStorage.getItem('gh_token_202guwang') || '';
+let dataDirty = false;  // 标记本地有未同步的修改
 
 async function loadData() {
   try {
@@ -396,7 +397,9 @@ async function fetchLatestSha() {
 async function saveData(silent) {
   if (saving) return;
   if (!githubToken) {
+    dataDirty = true;
     if (!silent) { showToast('🔑 请先设置 GitHub Token'); showTokenModal(); }
+    else { showToast('⚠️ 未设置 Token，修改仅保存在本地（刷新会丢失）'); }
     return;
   }
   saving = true;
@@ -424,13 +427,16 @@ async function saveData(silent) {
     if (resp.ok) {
       const result = await resp.json();
       dataSha = result.content.sha;
+      dataDirty = false;
       renderAll();
       if (!silent) showToast('✅ 数据已同步');
     } else {
+      dataDirty = true;
       const err = await resp.json().catch(() => ({}));
       showToast('❌ ' + (err.message || '保存失败，检查Token'));
     }
   } catch (e) {
+    dataDirty = true;
     showToast('❌ 网络错误，同步失败');
   }
   saving = false;
@@ -439,6 +445,10 @@ async function saveData(silent) {
 function autoSave() { saveData(true); }
 
 async function refreshData() {
+  if (dataDirty) {
+    showToast('⚠️ 有未同步的修改，请先设置 Token 保存或放弃修改');
+    return;
+  }
   await loadData();
   renderAll();
   showToast('🔄 数据已刷新');
@@ -1161,8 +1171,9 @@ function escapeHtml(str) {
   updateTokenBadge();
   await loadData();
   renderAll();
-  // 每15秒自动刷新一次
+  // 每15秒自动刷新一次（有未保存修改时跳过）
   setInterval(async () => {
+    if (dataDirty) return;
     await loadData();
     renderAll();
   }, 15000);
