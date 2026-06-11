@@ -375,16 +375,21 @@ async function loadData() {
 }
 
 async function fetchLatestSha() {
-  // 有 token 时从 API 获取最新 SHA，无 token 时尝试匿名获取
-  const headers = githubToken ? { 'Authorization': 'Bearer ' + githubToken, 'Cache-Control': 'no-cache' } : {};
+  if (!githubToken) return null;
   try {
-    const resp = await fetch(API_URL + '?_=' + Date.now(), { headers });
+    const resp = await fetch(API_URL + '?_=' + Date.now(), {
+      headers: { 'Authorization': 'Bearer ' + githubToken }
+    });
     if (resp.ok) {
       const info = await resp.json();
       dataSha = info.sha;
       return info.sha;
+    } else {
+      console.error('SHA fetch failed:', resp.status, await resp.text());
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error('SHA fetch error:', e);
+  }
   return null;
 }
 
