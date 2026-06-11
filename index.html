@@ -589,19 +589,22 @@
     <button onclick="showDemoData()" class="btn btn-ghost px-4 py-2.5 rounded-xl text-sm" id="btnDemo">
       <i class="fa fa-magic mr-1.5" aria-hidden="true"></i> 示例数据
     </button>
-    <button onclick="refreshData()" class="btn bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-xl text-sm font-medium text-emerald-600 hover:bg-emerald-100 transition-all">
-      <i class="fa fa-refresh mr-1.5" aria-hidden="true"></i> 刷新数据
+    <button onclick="refreshData()" class="btn bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-xl text-sm font-medium text-emerald-600 hover:bg-emerald-100 transition-colors duration-200" title="手动从 GitHub 拉取最新数据">
+      <i class="fa fa-refresh mr-1.5" aria-hidden="true"></i> 拉取远端
     </button>
     <div class="h-6 w-px bg-slate-200 hidden sm:block mx-1"></div>
     <button onclick="showTokenModal()" class="btn btn-ghost px-3.5 py-2.5 rounded-xl text-sm" title="设置 GitHub Token 以同步数据">
       <i class="fa fa-key mr-1.5 text-slate-400" aria-hidden="true"></i> <span id="tokenBadge" class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">只读</span>
     </button>
     <div class="flex-1 hidden sm:block"></div>
-    <button onclick="exportData()" class="btn btn-ghost px-3.5 py-2.5 rounded-xl text-sm text-slate-500" aria-label="导出数据">
+    <button onclick="exportData()" class="btn btn-ghost px-3.5 py-2.5 rounded-xl text-sm text-slate-500" aria-label="导出数据" title="导出 JSON 备份">
       <i class="fa fa-download mr-1" aria-hidden="true"></i>
     </button>
-    <button onclick="document.getElementById('importFile').click()" class="btn btn-ghost px-3.5 py-2.5 rounded-xl text-sm text-slate-500" aria-label="导入数据">
-      <i class="fa fa-upload mr-1" aria-hidden="true"></i>
+    <button onclick="saveData(false)" class="btn btn-ghost px-3.5 py-2.5 rounded-xl text-sm text-slate-500" aria-label="上传同步到 GitHub" title="上传同步到 GitHub">
+      <i class="fa fa-cloud-upload mr-1" aria-hidden="true"></i>
+    </button>
+    <button onclick="document.getElementById('importFile').click()" class="btn btn-ghost px-3.5 py-2.5 rounded-xl text-sm text-slate-500" aria-label="导入本地 JSON 数据" title="导入本地 JSON 数据">
+      <i class="fa fa-folder-open-o mr-1" aria-hidden="true"></i>
     </button>
     <input type="file" id="importFile" name="importFile" accept=".json" class="hidden" onchange="importData(event)" aria-label="选择要导入的数据文件">
     <button onclick="resetData()" class="btn px-3.5 py-2.5 rounded-xl text-sm text-rose-500 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors duration-200" aria-label="清空全部数据">
@@ -727,6 +730,7 @@
 const REPO_OWNER = 'K1limanjar0';
 const REPO_NAME = '202guwang';
 const DATA_FILE = 'data.json';
+const LOCAL_DATA_KEY = 'stock_king_local_draft_v1';
 const RAW_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${DATA_FILE}`;
 const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_FILE}`;
 
@@ -740,13 +744,39 @@ let dataSha = null;
 let githubToken = localStorage.getItem('gh_token_202guwang') || '';
 let dataDirty = false;  // 标记本地有未同步的修改
 
-async function loadData() {
+function normalizeData(parsed) {
+  const defaultYuEBao = { enabled: true, annualRate: 1.8, initialCapital: 100000 };
+  return { members: parsed.members || [], weeks: parsed.weeks || [], yuEBao: parsed.yuEBao || defaultYuEBao };
+}
+
+function loadLocalDraft() {
+  try {
+    const raw = localStorage.getItem(LOCAL_DATA_KEY);
+    if (!raw) return false;
+    data = normalizeData(JSON.parse(raw));
+    dataDirty = true;
+    return true;
+  } catch (e) {
+    localStorage.removeItem(LOCAL_DATA_KEY);
+    return false;
+  }
+}
+
+function saveLocalDraft(showTip = true) {
+  localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(data));
+  dataDirty = true;
+  renderAll();
+  if (showTip) showToast('✅ 已保存到本地，点击上传按钮同步到 GitHub');
+}
+
+async function loadData(options = {}) {
+  if (!options.forceRemote && loadLocalDraft()) return;
   try {
     const resp = await fetch(RAW_URL + '?_=' + Date.now());
     if (resp.ok) {
       const parsed = await resp.json();
-      const defaultYuEBao = { enabled: true, annualRate: 1.8, initialCapital: 100000 };
-      data = { members: parsed.members || [], weeks: parsed.weeks || [], yuEBao: parsed.yuEBao || defaultYuEBao };
+      data = normalizeData(parsed);
+      dataDirty = false;
     }
   } catch (e) { console.error('加载数据失败:', e); }
 }
@@ -804,6 +834,7 @@ async function saveData(silent) {
       const result = await resp.json();
       dataSha = result.content.sha;
       dataDirty = false;
+      localStorage.removeItem(LOCAL_DATA_KEY);
       renderAll();
       if (!silent) showToast('✅ 数据已同步');
     } else {
@@ -818,16 +849,15 @@ async function saveData(silent) {
   saving = false;
 }
 
-function autoSave() { saveData(true); }
+function autoSave(showTip = true) { saveLocalDraft(showTip); }
 
 async function refreshData() {
-  if (dataDirty) {
-    showToast('⚠️ 有未同步的修改，请先设置 Token 保存或放弃修改');
-    return;
-  }
-  await loadData();
+  if (dataDirty && !confirm('当前有未上传到 GitHub 的本地修改。\n\n继续刷新会丢弃本地草稿并拉取远端数据，确定继续吗？')) return;
+  localStorage.removeItem(LOCAL_DATA_KEY);
+  dataDirty = false;
+  await loadData({ forceRemote: true });
   renderAll();
-  showToast('🔄 数据已刷新');
+  showToast('🔄 已从 GitHub 拉取最新数据');
 }
 
 function setGitHubToken(token) {
@@ -845,7 +875,7 @@ function updateTokenBadge() {
   if (badge) {
     badge.className = githubToken ? 'text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold' : 'text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold cursor-pointer';
     badge.textContent = githubToken ? '可写入' : '只读';
-    badge.title = githubToken ? 'Token 已设置，数据会同步到 GitHub' : '点击设置 Token 以写入数据';
+    badge.title = githubToken ? 'Token 已设置，点击上传按钮才会同步到 GitHub' : '点击设置 Token 以写入数据';
     badge.onclick = githubToken ? null : showTokenModal;
   }
 }
@@ -854,7 +884,7 @@ function showTokenModal() {
   const token = prompt('请输入 GitHub Personal Access Token（Fine-grained token）：\n\n1. 打开 https://github.com/settings/tokens\n2. 创建 Fine-grained token\n3. 选择仓库 K1limanjar0/202guwang\n4. 权限勾选 Contents (Read and write)\n5. 复制 token 粘贴到这里\n\n留空可清除已保存的 token（变为只读模式）', githubToken);
   if (token !== null) {
     setGitHubToken(token);
-    if (token) showToast('✅ Token 已保存，可同步数据'); else showToast('📖 已切换为只读模式');
+    if (token) showToast('✅ Token 已保存，点击上传按钮同步数据'); else showToast('📖 已切换为只读模式');
     location.reload();
   }
 }
@@ -864,20 +894,20 @@ function addMember(name, initialCapital) {
   const id = 'm' + Date.now();
   const colorIdx = data.members.length % COLORS.length;
   data.members.push({ id, name, initialCapital: parseFloat(initialCapital) || 100000, color: COLORS[colorIdx] });
-  saveData();
+  autoSave();
 }
 
 function updateMember(id, name, initialCapital) {
   const m = data.members.find(x => x.id === id);
   if (m) { m.name = name; m.initialCapital = parseFloat(initialCapital) || 100000; }
-  saveData();
+  autoSave();
 }
 
 function deleteMember(id) {
   if (!confirm('确定要删除该成员及其所有数据吗？此操作不可撤销。')) return;
   data.members = data.members.filter(m => m.id !== id);
   data.weeks.forEach(w => { delete w.values[id]; });
-  saveData();
+  autoSave();
 }
 
 // ==================== 周操作 ====================
@@ -889,7 +919,7 @@ function addWeek() {
   const values = {};
   data.members.forEach(m => { values[m.id] = null; });
   data.weeks.push({ id, label: `第${n}周`, date: today, values });
-  saveData();
+  autoSave();
 }
 
 function deleteWeek(id) {
@@ -897,7 +927,7 @@ function deleteWeek(id) {
   data.weeks = data.weeks.filter(w => w.id !== id);
   // Re-label remaining weeks
   data.weeks.forEach((w, i) => { w.label = `第${i + 1}周`; });
-  saveData();
+  autoSave();
 }
 
 function updateWeekValue(weekId, memberId, value) {
@@ -1474,8 +1504,8 @@ function importData(event) {
       if (!imported.members || !imported.weeks) throw new Error('数据格式错误');
       const defaultYuEBao = { enabled: true, annualRate: 1.8, initialCapital: 100000 };
       data = { members: imported.members, weeks: imported.weeks, yuEBao: imported.yuEBao || defaultYuEBao };
-      saveData();
-      showToast('✅ 数据导入成功');
+      autoSave(false);
+      showToast('✅ 数据已导入本地，点击上传按钮同步到 GitHub');
     } catch (err) {
       showToast('❌ 导入失败，请检查文件格式');
     }
@@ -1487,8 +1517,8 @@ function importData(event) {
 function resetData() {
   if (!confirm('确定要清空所有数据吗？此操作不可撤销！\n\n建议先导出备份。')) return;
   data = { members: [], weeks: [], yuEBao: { enabled: true, annualRate: 1.8, initialCapital: 100000 } };
-  saveData();
-  showToast('✅ 数据已重置');
+  autoSave(false);
+  showToast('✅ 已在本地清空，点击上传按钮同步到 GitHub');
 }
 
 function showDemoData() {
@@ -1534,8 +1564,8 @@ function showDemoData() {
   }
 
   data = { members, weeks, yuEBao: { enabled: true, annualRate: 1.8, initialCapital: 100000 } };
-  saveData();
-  showToast('✅ 示例数据已加载');
+  autoSave(false);
+  showToast('✅ 示例数据已加载到本地，点击上传按钮同步到 GitHub');
 }
 
 // ==================== 工具函数 ====================
@@ -1550,12 +1580,6 @@ function escapeHtml(str) {
   updateTokenBadge();
   await loadData();
   renderAll();
-  // 每15秒自动刷新一次（有未保存修改时跳过）
-  setInterval(async () => {
-    if (dataDirty) return;
-    await loadData();
-    renderAll();
-  }, 15000);
 })();
 </script>
 </body>
