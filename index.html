@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#14313c">
 <title>202股王大赛</title>
+<link rel="preconnect" href="https://cdn.tailwindcss.com">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -15,6 +18,46 @@
     background-size: 24px 24px;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
     -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(15,118,110,0.14);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .skip-link {
+    position: fixed;
+    left: 16px;
+    top: 12px;
+    z-index: 999;
+    transform: translateY(-150%);
+    background: #fff;
+    color: #0f172a;
+    border: 1px solid #94a3b8;
+    border-radius: 8px;
+    padding: 8px 12px;
+    box-shadow: 0 10px 24px rgba(15,23,42,0.18);
+    transition: transform 0.18s ease;
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
+
+  button:focus-visible,
+  input:focus-visible,
+  .chart-toggle:focus-visible {
+    outline: 3px solid rgba(15,118,110,0.32);
+    outline-offset: 2px;
   }
 
   /* ========== 卡片 ========== */
@@ -31,7 +74,7 @@
 
   /* ========== 按钮 ========== */
   .btn {
-    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+    transition: transform 0.2s cubic-bezier(0.4,0,0.2,1), box-shadow 0.2s cubic-bezier(0.4,0,0.2,1), background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     font-weight: 500;
     letter-spacing: 0.01em;
   }
@@ -66,16 +109,16 @@
   .table-cell-input {
     width: 100px; text-align: center;
     border: 1.5px solid transparent; border-radius: 10px;
-    padding: 8px 6px; transition: all 0.2s;
+    padding: 8px 6px; transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
     background: rgba(248,250,252,0.6);
     font-variant-numeric: tabular-nums;
   }
   .table-cell-input:hover { border-color: #cbd5e1; background: #fff; }
   .table-cell-input:focus {
-    border-color: #818cf8; background: #fff; outline: none;
+    border-color: #818cf8; background: #fff;
     box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
   }
-  .table-row { transition: all 0.15s; }
+  .table-row { transition: background-color 0.15s ease; }
   .table-row:hover { background: rgba(238,242,255,0.5) !important; }
 
   /* ========== 收益率颜色 ========== */
@@ -118,7 +161,7 @@
   /* ========== 图表切换 ========== */
   .chart-toggle {
     cursor: pointer; padding: 8px 20px; border-radius: 24px;
-    font-size: 13px; font-weight: 600; transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+    font-size: 13px; font-weight: 600; transition: background-color 0.25s cubic-bezier(0.4,0,0.2,1), color 0.25s cubic-bezier(0.4,0,0.2,1), box-shadow 0.25s cubic-bezier(0.4,0,0.2,1);
   }
   .chart-toggle.active {
     background: linear-gradient(135deg, #6366f1, #4f46e5);
@@ -137,8 +180,8 @@
   /* ========== 自定义输入框 ========== */
   .input-modern {
     width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px;
-    padding: 10px 14px; font-size: 14px; transition: all 0.2s;
-    background: #f8fafc; outline: none;
+    padding: 10px 14px; font-size: 14px; transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    background: #f8fafc;
   }
   .input-modern:focus {
     border-color: #818cf8; background: white;
@@ -177,6 +220,17 @@
 
   /* ========== 现代表单 ========== */
   .form-label { font-size: 0.8rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 
   /* ========== 视觉优化覆盖层 ========== */
   :root {
@@ -501,6 +555,7 @@
 </style>
 </head>
 <body class="min-h-screen">
+<a href="#mainContent" class="skip-link">跳到主内容</a>
 
 <!-- Header -->
 <header class="relative overflow-hidden" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #312e81 70%, #1e1b4b 100%);">
@@ -520,37 +575,37 @@
   </div>
 </header>
 
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+<main id="mainContent" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
   <!-- Toolbar -->
   <div class="card p-3 flex flex-wrap items-center gap-2 animate-in" id="toolbar">
     <button onclick="showMemberModal()" class="btn btn-primary px-5 py-2.5 rounded-xl text-sm">
-      <i class="fa fa-user-plus mr-1.5"></i> 添加成员
+      <i class="fa fa-user-plus mr-1.5" aria-hidden="true"></i> 添加成员
     </button>
     <button onclick="addWeek()" class="btn btn-ghost px-5 py-2.5 rounded-xl text-sm">
-      <i class="fa fa-calendar-plus-o mr-1.5"></i> 添加周记录
+      <i class="fa fa-calendar-plus-o mr-1.5" aria-hidden="true"></i> 添加周记录
     </button>
     <div class="h-6 w-px bg-slate-200 hidden sm:block mx-1"></div>
     <button onclick="showDemoData()" class="btn btn-ghost px-4 py-2.5 rounded-xl text-sm" id="btnDemo">
-      <i class="fa fa-magic mr-1.5"></i> 示例数据
+      <i class="fa fa-magic mr-1.5" aria-hidden="true"></i> 示例数据
     </button>
     <button onclick="refreshData()" class="btn bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-xl text-sm font-medium text-emerald-600 hover:bg-emerald-100 transition-all">
-      <i class="fa fa-refresh mr-1.5"></i> 刷新数据
+      <i class="fa fa-refresh mr-1.5" aria-hidden="true"></i> 刷新数据
     </button>
     <div class="h-6 w-px bg-slate-200 hidden sm:block mx-1"></div>
     <button onclick="showTokenModal()" class="btn btn-ghost px-3.5 py-2.5 rounded-xl text-sm" title="设置 GitHub Token 以同步数据">
-      <i class="fa fa-key mr-1.5 text-slate-400"></i> <span id="tokenBadge" class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">只读</span>
+      <i class="fa fa-key mr-1.5 text-slate-400" aria-hidden="true"></i> <span id="tokenBadge" class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">只读</span>
     </button>
     <div class="flex-1 hidden sm:block"></div>
-    <button onclick="exportData()" class="btn btn-ghost px-3.5 py-2.5 rounded-xl text-sm text-slate-500">
-      <i class="fa fa-download mr-1"></i>
+    <button onclick="exportData()" class="btn btn-ghost px-3.5 py-2.5 rounded-xl text-sm text-slate-500" aria-label="导出数据">
+      <i class="fa fa-download mr-1" aria-hidden="true"></i>
     </button>
-    <button onclick="document.getElementById('importFile').click()" class="btn btn-ghost px-3.5 py-2.5 rounded-xl text-sm text-slate-500">
-      <i class="fa fa-upload mr-1"></i>
+    <button onclick="document.getElementById('importFile').click()" class="btn btn-ghost px-3.5 py-2.5 rounded-xl text-sm text-slate-500" aria-label="导入数据">
+      <i class="fa fa-upload mr-1" aria-hidden="true"></i>
     </button>
-    <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)">
-    <button onclick="resetData()" class="btn px-3.5 py-2.5 rounded-xl text-sm text-rose-500 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all">
-      <i class="fa fa-trash-o mr-1"></i>
+    <input type="file" id="importFile" name="importFile" accept=".json" class="hidden" onchange="importData(event)" aria-label="选择要导入的数据文件">
+    <button onclick="resetData()" class="btn px-3.5 py-2.5 rounded-xl text-sm text-rose-500 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors duration-200" aria-label="清空全部数据">
+      <i class="fa fa-trash-o mr-1" aria-hidden="true"></i>
     </button>
   </div>
 
@@ -570,15 +625,15 @@
         </label>
         <div class="flex items-center gap-1.5 text-sm bg-slate-100 rounded-xl px-3 py-1.5">
           <span class="text-slate-500 text-xs font-medium">年化</span>
-          <input type="number" id="yuebaoRate" value="1.8" step="0.1" min="0" max="10"
-            class="w-14 bg-transparent text-center text-sm font-semibold text-slate-700 outline-none"
+          <input type="number" id="yuebaoRate" name="yuebaoRate" value="1.8" step="0.1" min="0" max="10" inputmode="decimal" autocomplete="off" aria-label="余额宝年化收益率"
+            class="w-14 bg-transparent text-center text-sm font-semibold text-slate-700"
             onchange="saveYuEBaoSettings()">
           <span class="text-slate-500 text-xs">%</span>
         </div>
         <div class="flex items-center gap-1.5 text-sm bg-slate-100 rounded-xl px-3 py-1.5">
           <span class="text-slate-500 text-xs font-medium">本金</span>
-          <input type="number" id="yuebaoCapital" value="100000" step="1000" min="0"
-            class="w-20 bg-transparent text-center text-sm font-semibold text-slate-700 outline-none"
+          <input type="number" id="yuebaoCapital" name="yuebaoCapital" value="100000" step="1000" min="0" inputmode="numeric" autocomplete="off" aria-label="余额宝本金"
+            class="w-20 bg-transparent text-center text-sm font-semibold text-slate-700"
             onchange="saveYuEBaoSettings()">
           <span class="text-slate-500 text-xs">元</span>
         </div>
@@ -619,8 +674,8 @@
     <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
       <h2 class="font-semibold text-gray-700"><i class="fa fa-line-chart mr-1 text-indigo-500"></i> 收益曲线</h2>
       <div class="flex gap-1 bg-gray-100 rounded-full p-1">
-        <button class="chart-toggle active" onclick="switchChartMode('absolute')" id="toggleAbsolute">资产总值</button>
-        <button class="chart-toggle" onclick="switchChartMode('return')" id="toggleReturn">收益率 %</button>
+        <button class="chart-toggle active" onclick="switchChartMode('absolute')" id="toggleAbsolute" aria-pressed="true">资产总值</button>
+        <button class="chart-toggle" onclick="switchChartMode('return')" id="toggleReturn" aria-pressed="false">收益率 %</button>
       </div>
     </div>
     <div class="relative" style="height: 380px;">
@@ -648,12 +703,12 @@
     <h3 class="text-lg font-semibold text-gray-800 mb-4" id="memberModalTitle">添加成员</h3>
     <div class="space-y-4">
       <div>
-        <label class="form-label block mb-1.5">姓名</label>
-        <input id="memberName" type="text" placeholder="输入成员姓名" class="input-modern">
+        <label for="memberName" class="form-label block mb-1.5">姓名</label>
+        <input id="memberName" name="memberName" type="text" placeholder="例如：张三…" autocomplete="off" class="input-modern">
       </div>
       <div>
-        <label class="form-label block mb-1.5">初始资金（元）</label>
-        <input id="memberCapital" type="number" placeholder="100000" value="100000" class="input-modern">
+        <label for="memberCapital" class="form-label block mb-1.5">初始资金（元）</label>
+        <input id="memberCapital" name="memberCapital" type="number" inputmode="numeric" autocomplete="off" placeholder="例如：100000…" value="100000" class="input-modern">
       </div>
       <input type="hidden" id="memberEditId">
       <div class="flex gap-3 justify-end pt-4">
@@ -665,7 +720,7 @@
 </div>
 
 <!-- Toast -->
-<div id="toast" class="toast hidden"></div>
+<div id="toast" class="toast hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
 // ==================== 数据管理（GitHub API 同步）====================
@@ -1031,9 +1086,9 @@ function renderTable() {
   data.weeks.forEach(w => {
     html += `<th class="px-3 py-2 text-center border-b border-gray-200 whitespace-nowrap" style="min-width:120px">
       <div class="flex flex-col items-center gap-1">
-        <input value="${escapeHtml(w.label)}" class="text-xs font-semibold text-gray-600 bg-transparent border border-transparent hover:border-gray-300 focus:border-indigo-400 rounded px-2 py-0.5 text-center outline-none" style="width:80px" onchange="updateWeekLabel('${w.id}', this.value)" title="点击编辑周标签">
-        <input type="date" value="${w.date}" class="text-xs text-gray-400 bg-transparent border border-transparent hover:border-gray-300 focus:border-indigo-400 rounded px-1 py-0.5 outline-none" onchange="updateWeekDate('${w.id}', this.value)" title="点击编辑日期">
-        <button onclick="deleteWeek('${w.id}')" class="text-gray-300 hover:text-red-400 text-xs mt-0.5" title="删除此周"><i class="fa fa-times"></i></button>
+        <input value="${escapeHtml(w.label)}" name="weekLabel_${w.id}" aria-label="${escapeHtml(w.label)} 周标签" autocomplete="off" class="text-xs font-semibold text-gray-600 bg-transparent border border-transparent hover:border-gray-300 focus:border-indigo-400 rounded px-2 py-0.5 text-center" style="width:80px" onchange="updateWeekLabel('${w.id}', this.value)" title="点击编辑周标签">
+        <input type="date" value="${w.date}" name="weekDate_${w.id}" aria-label="${escapeHtml(w.label)} 日期" autocomplete="off" class="text-xs text-gray-400 bg-transparent border border-transparent hover:border-gray-300 focus:border-indigo-400 rounded px-1 py-0.5" onchange="updateWeekDate('${w.id}', this.value)" title="点击编辑日期">
+        <button onclick="deleteWeek('${w.id}')" class="text-gray-300 hover:text-red-400 text-xs mt-0.5" title="删除此周" aria-label="删除 ${escapeHtml(w.label)}"><i class="fa fa-times" aria-hidden="true"></i></button>
       </div>
     </th>`;
   });
@@ -1058,6 +1113,7 @@ function renderTable() {
       const rr = getReturnRate(member, val);
       html += `<td class="px-2 py-2 border-b border-gray-100 text-center">
         <input type="number" value="${val !== null && val !== undefined ? val : ''}"
+          name="asset_${member.id}_${w.id}" inputmode="numeric" autocomplete="off" aria-label="${escapeHtml(member.name)} ${escapeHtml(w.label)} 资产总值"
           class="table-cell-input font-mono text-sm" placeholder="-"
           onchange="updateWeekValue('${w.id}', '${member.id}', this.value)"
           onfocus="this.select()">
@@ -1071,8 +1127,8 @@ function renderTable() {
       </span>
     </td>`;
     html += `<td class="px-3 py-3 border-b border-gray-100 text-center">
-      <button onclick="editMember('${member.id}')" class="text-gray-400 hover:text-indigo-500 mr-2" title="编辑"><i class="fa fa-pencil"></i></button>
-      <button onclick="deleteMember('${member.id}')" class="text-gray-400 hover:text-red-500" title="删除"><i class="fa fa-trash"></i></button>
+      <button onclick="editMember('${member.id}')" class="text-gray-400 hover:text-indigo-500 mr-2" title="编辑" aria-label="编辑 ${escapeHtml(member.name)}"><i class="fa fa-pencil" aria-hidden="true"></i></button>
+      <button onclick="deleteMember('${member.id}')" class="text-gray-400 hover:text-red-500" title="删除" aria-label="删除 ${escapeHtml(member.name)}"><i class="fa fa-trash" aria-hidden="true"></i></button>
     </td>`;
     html += '</tr>';
   });
@@ -1328,6 +1384,8 @@ function switchChartMode(mode) {
   chartMode = mode;
   document.getElementById('toggleAbsolute').classList.toggle('active', mode === 'absolute');
   document.getElementById('toggleReturn').classList.toggle('active', mode === 'return');
+  document.getElementById('toggleAbsolute').setAttribute('aria-pressed', mode === 'absolute' ? 'true' : 'false');
+  document.getElementById('toggleReturn').setAttribute('aria-pressed', mode === 'return' ? 'true' : 'false');
   renderChart();
 }
 
