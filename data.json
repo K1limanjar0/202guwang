@@ -70,7 +70,7 @@
   "weeks": [],
   "yuEBao": {
     "enabled": true,
-    "annualRate": 1.1,
+    "annualRate": 1.02,
     "initialCapital": 500000
   }
 }
