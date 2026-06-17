@@ -122,8 +122,8 @@
   .table-row:hover { background: rgba(238,242,255,0.5) !important; }
 
   /* ========== 收益率颜色 ========== */
-  .return-positive { color: #10b981; font-weight: 600; }
-  .return-negative { color: #ef4444; font-weight: 600; }
+  .return-positive { color: #ef4444; font-weight: 600; }
+  .return-negative { color: #10b981; font-weight: 600; }
 
   /* ========== 模态框 ========== */
   .modal-overlay {
@@ -395,8 +395,8 @@
     box-shadow: 0 0 0 3px rgba(15,118,110,0.12);
   }
 
-  .return-positive { color: #059669; }
-  .return-negative { color: #dc2626; }
+  .return-positive { color: #dc2626; }
+  .return-negative { color: #059669; }
 
   .chart-toggle {
     border-radius: 7px;
@@ -552,30 +552,456 @@
       height: 320px !important;
     }
   }
+
+  /* ========== 第二版视觉精修：更像数据看板 ========== */
+  :root {
+    --page: #f4f7fb;
+    --surface: #ffffff;
+    --surface-soft: #f8fafc;
+    --ink-strong: #0f172a;
+    --ink: #1f2937;
+    --ink-muted: #64748b;
+    --line-soft: #e5edf5;
+    --line: #d8e2ee;
+    --brand: #dc2626;
+    --brand-strong: #b91c1c;
+    --brand-soft: #fff1f2;
+    --blue: #2563eb;
+    --up-red: #dc2626;
+    --down-green: #059669;
+    --gold: #b7791f;
+  }
+
+  body {
+    color: var(--ink);
+    background:
+      linear-gradient(180deg, #eef4f8 0, var(--page) 220px, #f8fafc 100%),
+      linear-gradient(90deg, rgba(15,23,42,0.035) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(15,23,42,0.035) 1px, transparent 1px);
+    background-size: auto, 32px 32px, 32px 32px;
+  }
+
+  .site-header {
+    background:
+      linear-gradient(135deg, #2a1111 0%, #5f1717 48%, #991b1b 100%) !important;
+    min-height: 184px;
+    isolation: isolate;
+  }
+
+  .site-header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(120deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 112px),
+      linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 48%, transparent 100%);
+    background-size: 112px 100%, 100% 100%;
+    opacity: 0.52;
+    pointer-events: none;
+  }
+
+  .market-grid {
+    opacity: 0.22;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.14) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+  }
+
+  .brand-mark {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fee2e2;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(254,202,202,0.24);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  .live-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 5px 9px;
+    color: #fecaca;
+    background: rgba(248,113,113,0.13);
+    border: 1px solid rgba(254,202,202,0.26);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+
+  .dashboard-layout {
+    margin-top: -34px;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.96);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 14px 36px rgba(15,23,42,0.08);
+  }
+
+  .card:hover {
+    box-shadow: 0 18px 42px rgba(15,23,42,0.1);
+  }
+
+  #statsCards {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(108px, 1fr));
+    gap: 10px;
+    width: min(720px, 100%);
+  }
+
+  #statsCards > div {
+    min-width: 0 !important;
+    border-radius: 8px !important;
+    padding: 13px 14px !important;
+    text-align: left !important;
+    background: rgba(255,255,255,0.105) !important;
+    border: 1px solid rgba(255,255,255,0.16) !important;
+  }
+
+  #statsCards .stat-number,
+  #statsCards .text-base {
+    line-height: 1.08;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #statsCards div[class*="uppercase"] {
+    margin-top: 5px;
+    color: rgba(226,232,240,0.76) !important;
+    letter-spacing: 0;
+  }
+
+  #statsCards .stock-up {
+    color: #fca5a5;
+  }
+
+  #statsCards .stock-down {
+    color: #6ee7b7;
+  }
+
+  .live-chip .live-dot {
+    background: #fca5a5 !important;
+  }
+
+  #toolbar {
+    position: sticky;
+    top: 12px;
+    z-index: 30;
+    padding: 12px;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .btn {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px !important;
+    font-weight: 650;
+    letter-spacing: 0;
+  }
+
+  .btn i {
+    font-size: 14px;
+  }
+
+  .btn-primary {
+    background: var(--brand);
+    box-shadow: 0 10px 20px rgba(15,118,110,0.2);
+  }
+
+  .btn-primary:hover {
+    background: var(--brand-strong);
+    box-shadow: 0 14px 24px rgba(15,118,110,0.24);
+  }
+
+  .btn-ghost {
+    background: var(--surface);
+    border-color: var(--line);
+    color: #334155;
+  }
+
+  .btn-ghost:hover {
+    background: #f8fbfd;
+    border-color: #b8c7d8;
+    color: #0f172a;
+  }
+
+  #toolbar .h-6 {
+    background: var(--line);
+    opacity: 0.8;
+  }
+
+  #tokenBadge {
+    border-radius: 999px !important;
+    background: #fff1f2 !important;
+    color: #be123c !important;
+  }
+
+  #yuebaoSettings {
+    background: linear-gradient(180deg, #fffaf0, #ffffff);
+    border-color: #f6d7a7;
+  }
+
+  #yuebaoSettings .w-10 {
+    border-radius: 7px !important;
+    background: #fef3c7 !important;
+    color: var(--gold);
+  }
+
+  #yuebaoSettings input[type="number"] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  #emptyState {
+    padding: 56px 24px;
+  }
+
+  .empty-visual {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand);
+    background: var(--brand-soft);
+    border: 1px solid #bfebdc;
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--ink-strong);
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .section-heading i {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    color: var(--brand) !important;
+    background: var(--brand-soft);
+  }
+
+  #tableSection > div:first-child,
+  #rankingSection > div:first-child,
+  #chartSection > div:first-child {
+    background: linear-gradient(180deg, #ffffff, #f9fbfd);
+  }
+
+  #tableContainer,
+  #rankingSection .overflow-x-auto {
+    background: #fff;
+  }
+
+  thead th {
+    background: #f7fafc !important;
+    color: #475569;
+    border-bottom: 1px solid var(--line) !important;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+
+  tbody td {
+    border-bottom-color: #edf2f7 !important;
+  }
+
+  .sticky-left,
+  .sticky-left-2 {
+    background: inherit;
+    box-shadow: 1px 0 0 #edf2f7;
+  }
+
+  .row-even,
+  .row-odd {
+    background: #fff;
+  }
+
+  .table-row:hover,
+  .row-hover:hover {
+    background: #f2fbf8 !important;
+  }
+
+  .table-cell-input {
+    width: 112px;
+    border-radius: 7px;
+    border: 1px solid #dbe5ef;
+    background: #fff;
+    color: #0f172a;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .table-cell-input:hover {
+    border-color: #b8c7d8;
+  }
+
+  .table-cell-input:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(15,118,110,0.12);
+  }
+
+  .return-positive { color: var(--up-red); }
+  .return-negative { color: var(--down-green); }
+
+  #chartSection {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  #chartSection > div:first-child {
+    margin: 0 !important;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  #chartSection .relative {
+    margin: 18px 20px 20px;
+    border: 1px solid var(--line-soft);
+    border-radius: 8px;
+    background:
+      linear-gradient(180deg, #ffffff, #fbfdff),
+      linear-gradient(90deg, rgba(148,163,184,0.08) 1px, transparent 1px);
+    padding: 14px;
+  }
+
+  .chart-toggle {
+    border-radius: 7px;
+    padding: 8px 15px;
+  }
+
+  .chart-toggle.active {
+    background: var(--ink-strong);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(15,23,42,0.18);
+  }
+
+  .chart-toggle:not(.active) {
+    color: #64748b;
+  }
+
+  .chart-toggle:not(.active):hover {
+    color: var(--brand);
+    background: rgba(15,118,110,0.08);
+  }
+
+  .rank-badge {
+    border-radius: 7px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #rankingTable tbody tr:first-child {
+    background: linear-gradient(90deg, #fffbeb, #ffffff);
+  }
+
+  #rankingTable tbody tr:first-child td {
+    border-bottom-color: #fde7bd !important;
+  }
+
+  .modal {
+    border-radius: 10px;
+    border: 1px solid rgba(226,232,240,0.85);
+  }
+
+  .input-modern {
+    border-radius: 7px;
+    border-color: #dbe5ef;
+    background: #fff;
+  }
+
+  .input-modern:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(15,118,110,0.12);
+  }
+
+  .toast > div {
+    border-radius: 8px !important;
+  }
+
+  @media (max-width: 960px) {
+    #statsCards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
+
+    .dashboard-layout {
+      margin-top: -26px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .site-header {
+      min-height: 248px;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+    }
+
+    #toolbar {
+      position: static;
+    }
+
+    #toolbar button {
+      flex: 1 1 calc(50% - 6px);
+    }
+
+    #statsCards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #chartSection > div:first-child {
+      padding: 14px;
+    }
+
+    #chartSection .relative {
+      margin: 12px 14px 14px;
+    }
+  }
 </style>
 </head>
 <body class="min-h-screen">
 <a href="#mainContent" class="skip-link">跳到主内容</a>
 
 <!-- Header -->
-<header class="relative overflow-hidden" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #312e81 70%, #1e1b4b 100%);">
-  <div class="absolute inset-0 opacity-[0.07]" style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>'); background-size: 200px;"></div>
-  <div class="relative max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <div class="flex items-center gap-3 mb-1">
-          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">📈 202股王大赛</h1>
-          <span class="text-[10px] bg-gradient-to-r from-emerald-400 to-green-300 text-emerald-900 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">LIVE</span>
-          <span class="live-dot w-2 h-2 bg-emerald-400 rounded-full"></span>
+<header class="site-header relative overflow-hidden">
+  <div class="market-grid absolute inset-0" aria-hidden="true"></div>
+  <div class="relative max-w-7xl mx-auto px-4 pt-7 pb-16 sm:px-6 lg:px-8">
+    <div class="flex items-start justify-between flex-wrap gap-6">
+      <div class="flex items-start gap-4">
+        <div class="brand-mark">
+          <i class="fa fa-line-chart text-xl" aria-hidden="true"></i>
         </div>
-        <p class="text-indigo-200/70 text-sm font-medium">每周记录一次 · 数据云端共享 · 看看谁跑赢余额宝</p>
+        <div>
+          <div class="flex items-center gap-3 mb-2 flex-wrap">
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">202股王大赛</h1>
+            <span class="live-chip"><span class="live-dot w-2 h-2 bg-emerald-300 rounded-full"></span> LIVE</span>
+          </div>
+          <p class="text-slate-300/85 text-sm font-medium">每周记录 · 云端共享 · 对标余额宝</p>
+        </div>
       </div>
       <div id="statsCards" class="flex gap-3 text-sm"></div>
     </div>
   </div>
 </header>
 
-<main id="mainContent" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+<main id="mainContent" class="dashboard-layout max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 space-y-6">
 
   <!-- Toolbar -->
   <div class="card p-3 flex flex-wrap items-center gap-2 animate-in" id="toolbar">
@@ -616,7 +1042,7 @@
   <div id="yuebaoSettings" class="card p-4 hidden animate-in delay-1">
     <div class="flex items-center justify-between flex-wrap gap-3">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-xl">💰</div>
+        <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-lg"><i class="fa fa-bank" aria-hidden="true"></i></div>
         <div>
           <h3 class="font-semibold text-slate-700 text-sm">余额宝基准</h3>
           <p class="text-xs text-slate-400">按复利计算，看看大家能不能跑赢余额宝</p>
@@ -646,7 +1072,7 @@
 
   <!-- Empty State -->
   <div id="emptyState" class="card p-12 text-center hidden">
-    <div class="text-6xl mb-4">📊</div>
+    <div class="empty-visual mb-4"><i class="fa fa-area-chart text-2xl" aria-hidden="true"></i></div>
     <h2 class="text-xl font-semibold text-gray-700 mb-2">还没有数据</h2>
     <p class="text-gray-500 mb-6">先添加课题组成员，然后每周记录一次大家的资产总值</p>
     <div class="flex gap-3 justify-center flex-wrap">
@@ -662,7 +1088,7 @@
   <!-- Data Table Section -->
   <div id="tableSection" class="card overflow-hidden hidden">
     <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
-      <h2 class="font-semibold text-gray-700"><i class="fa fa-table mr-1 text-indigo-500"></i> 每周数据记录</h2>
+      <h2 class="section-heading"><i class="fa fa-table" aria-hidden="true"></i> 每周数据记录</h2>
       <span class="text-xs text-gray-400"><i class="fa fa-info-circle mr-1"></i> 在表格中直接编辑数值，修改自动保存</span>
     </div>
     <div class="overflow-x-auto" id="tableContainer">
@@ -675,7 +1101,7 @@
   <!-- Chart Section -->
   <div id="chartSection" class="card p-5 hidden">
     <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
-      <h2 class="font-semibold text-gray-700"><i class="fa fa-line-chart mr-1 text-indigo-500"></i> 收益曲线</h2>
+      <h2 class="section-heading"><i class="fa fa-line-chart" aria-hidden="true"></i> 收益曲线</h2>
       <div class="flex gap-1 bg-gray-100 rounded-full p-1">
         <button class="chart-toggle active" onclick="switchChartMode('absolute')" id="toggleAbsolute" aria-pressed="true">资产总值</button>
         <button class="chart-toggle" onclick="switchChartMode('return')" id="toggleReturn" aria-pressed="false">收益率 %</button>
@@ -688,8 +1114,9 @@
 
   <!-- Ranking Section -->
   <div id="rankingSection" class="card overflow-hidden hidden">
-    <div class="px-5 py-3 border-b border-gray-100">
-      <h2 class="font-semibold text-gray-700"><i class="fa fa-trophy mr-1 text-indigo-500"></i> 收益排名</h2>
+    <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+      <h2 class="section-heading"><i class="fa fa-trophy" aria-hidden="true"></i> 收益排名</h2>
+      <span class="text-xs text-slate-400">按最新收益率自动排序</span>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm" id="rankingTable">
@@ -972,9 +1399,9 @@ function getLatestValue(member) {
 
 function getReturnEmoji(returnRate) {
   if (returnRate === null || returnRate === undefined) return '';
-  if (returnRate > 0) return ' 😊';
-  if (returnRate < 0) return ' 😢';
-  return ' 😐';
+  if (returnRate > 0) return ' ↑';
+  if (returnRate < 0) return ' ↓';
+  return ' -';
 }
 
 function getMemberDisplayName(member) {
@@ -1099,11 +1526,11 @@ function renderStats() {
       <div class="text-base font-bold text-white truncate max-w-[110px] flex items-center justify-center gap-1">
         <span class="text-amber-400">👑</span> ${escapeHtml(`${topMember.name}${getReturnEmoji(topMember.returnRate)}`)}
       </div>
-      <div class="text-xs font-bold ${topMember.returnRate >= 0 ? 'text-emerald-300' : 'text-rose-300'}">${topMember.returnRate >= 0 ? '+' : ''}${topMember.returnRate.toFixed(2)}%</div>
+      <div class="text-xs font-bold ${topMember.returnRate >= 0 ? 'stock-up' : 'stock-down'}">${topMember.returnRate >= 0 ? '+' : ''}${topMember.returnRate.toFixed(2)}%</div>
     </div>` : ''}
     ${avgReturn !== null ? `
     <div class="bg-white/10 backdrop-blur-md rounded-2xl px-5 py-3 text-center min-w-[80px] border border-white/10">
-      <div class="text-base font-extrabold ${avgReturn >= 0 ? 'text-emerald-300' : 'text-rose-300'}">${avgReturn >= 0 ? '+' : ''}${avgReturn.toFixed(2)}%</div>
+      <div class="text-base font-extrabold ${avgReturn >= 0 ? 'stock-up' : 'stock-down'}">${avgReturn >= 0 ? '+' : ''}${avgReturn.toFixed(2)}%</div>
       <div class="text-[11px] text-indigo-200/80 font-medium tracking-wide uppercase">平均收益</div>
     </div>` : ''}
     ${beatYuEBao !== null ? `
@@ -1194,7 +1621,7 @@ function renderChart() {
     return;
   }
 
-  const labels = data.weeks.map(w => w.label);
+  const labels = ['初始', ...data.weeks.map(w => w.label)];
 
   // 为每个成员创建渐变色
   function hexToRgba(hex, alpha) {
@@ -1209,12 +1636,15 @@ function renderChart() {
     // 创建 canvas 渐变（在 afterLayout 中处理）
     return {
       label: displayName,
-      data: data.weeks.map(w => {
+      data: [
+        chartMode === 'absolute' ? member.initialCapital : 0,
+        ...data.weeks.map(w => {
         const v = w.values[member.id];
         if (v === null || v === undefined) return null;
         if (chartMode === 'absolute') return v;
         return parseFloat(getReturnRate(member, v).toFixed(2));
-      }),
+        })
+      ],
       borderColor: member.color,
       backgroundColor: hexToRgba(member.color, 0.08),
       borderWidth: 3,
@@ -1234,10 +1664,13 @@ function renderChart() {
     const ybColor = '#F59E0B';
     datasets.push({
       label: '💰 余额宝基准',
-      data: data.weeks.map((_, i) => {
-        if (chartMode === 'absolute') return getYuEBaoValue(i);
-        return parseFloat(getYuEBaoReturnRate(i).toFixed(2));
-      }),
+      data: [
+        chartMode === 'absolute' ? data.yuEBao.initialCapital : 0,
+        ...data.weeks.map((_, i) => {
+          if (chartMode === 'absolute') return getYuEBaoValue(i);
+          return parseFloat(getYuEBaoReturnRate(i).toFixed(2));
+        })
+      ],
       borderColor: ybColor,
       backgroundColor: 'rgba(245,158,11,0.06)',
       borderWidth: 3,
